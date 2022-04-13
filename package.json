@@ -1,15 +1,16 @@
 {
   "name": "puppet-pdf",
-  "version": "0.0.1",
-  "description": "",
+  "version": "0.9.0",
+  "description": "PDF generation for puppets – puppeteer based nodejs microservice",
   "main": "index.mjs",
   "type": "module",
   "scripts": {
-    "dev": "eval $(egrep -v '^#' .env | xargs) nodemon index.mjs"
+    "dev": "eval $(egrep -v '^#' .env | xargs) nodemon index.mjs",
+    "start": "node index.mjs"
   },
-  "author": "",
+  "author": "Alexander Schedler",
   "license": "ISC",
-  "engine": {
+  "engines": {
     "node": "16.x",
     "npm": "8.5.5"
   },

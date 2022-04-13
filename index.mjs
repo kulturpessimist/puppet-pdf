@@ -3,10 +3,24 @@ import r from "koa-route";
 import { v4 } from "uuid";
 import puppeteer from "puppeteer";
 
+/*
+                                                           
+           ,ggg,        gg                                 
+          dP""Y8b       dP                                 
+          Yb, `88      d8'                                 
+           `"  88    ,dP'                                  
+               88aaad8"                                    
+               88""""Yb,      ,ggggg,    ,gggg,gg          
+               88     "8b    dP"  "Y8gggdP"  "Y8I          
+               88      `8i  i8'    ,8I i8'    ,8I          
+               88       Yb,,d8,   ,d8',d8,   ,d8b,         
+               88        Y8P"Y8888P"  P"Y8888P"`Y8         
+                                                           
+*/
+
 const app = new Koa();
 
 // middlewares
-
 app.use(async (ctx, next) => {
   const start = Date.now();
   await next();
@@ -26,7 +40,7 @@ app.use(async (ctx, next) => {
 
 app.use(
   r.all("/", async (ctx) => {
-    ctx.body = "Hello World";
+    ctx.body = `Version ${process.env.npm_package_version}`;
   })
 );
 
@@ -45,7 +59,7 @@ app.use(
     });
     // get config from meta tags of target site
     // the meta tags must have a name starting with "puppet:"
-    const texts = await page.evaluate(() => {
+    const metaTags = await page.evaluate(() => {
       const namespace = "puppet";
       return [...document.querySelectorAll(`meta[name^=${namespace}\\:]`)].map(
         (element) => {
@@ -54,11 +68,13 @@ app.use(
       );
     });
     const cfg = {};
-    texts.forEach((text) => {
+    metaTags.forEach((tag) => {
       try {
-        cfg[text.key] = JSON.parse(text.value);
+        // try to eval the content...
+        cfg[tag.key] = JSON.parse(tag.value);
       } catch (e) {
-        cfg[text.key] = text.value;
+        // in case of error use the content as it is...
+        cfg[tag.key] = tag.value;
       }
     });
     //
