@@ -32,10 +32,13 @@ app.use(
 
 app.use(
   r.all("/pdf", async (ctx) => {
+    // TODO: TOKEN check process.env.TOKEN
     const url = ctx.request.query.url || "https://www.schedler.pro";
     const download = "download" in ctx.request.query || false;
     //
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
     await page.goto(url, {
       waitUntil: "networkidle0",
