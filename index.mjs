@@ -103,6 +103,7 @@ app.use(
     pdfStream.on("end", async () => {
       await browser.close();
     });
+    ctx.set("Content-Type", "application/pdf");
     ctx.body = pdfStream;
     console.info(`${url} delivered with cfg`, {
       ...DefaultPDFOptions,
