@@ -105,10 +105,10 @@ app.use(
     });
     ctx.set("Content-Type", "application/pdf");
     ctx.body = pdfStream;
-    console.info(`${url} delivered with cfg`, {
+    /* console.info(`${url} delivered with cfg`, {
       ...DefaultPDFOptions,
       ...cfg,
-    });
+    }); */
   })
 );
 
