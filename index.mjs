@@ -47,7 +47,7 @@ app.use(
 app.use(
   r.all("/pdf", async (ctx) => {
     // TODO: TOKEN check process.env.TOKEN
-    const url = ctx.request.query.url || "https://www.schedler.pro";
+    const url = ctx.request.query.url || "https://pptr.dev";
     const download = "download" in ctx.request.query || false;
     //
     const browser = await puppeteer.launch({
@@ -87,8 +87,8 @@ app.use(
       landscape: false,
       pageRanges: "1-1",
       format: "",
-      width: "10cm",
-      height: "10cm",
+      width: "21cm",
+      height: "29cm",
       preferCSSPageSize: false,
       margin: { top: "1cm", right: "1cm", bottom: "1cm", left: "1cm" },
       omitBackground: false,
@@ -105,10 +105,6 @@ app.use(
     });
     ctx.set("Content-Type", "application/pdf");
     ctx.body = pdfStream;
-    /* console.info(`${url} delivered with cfg`, {
-      ...DefaultPDFOptions,
-      ...cfg,
-    }); */
   })
 );
 
