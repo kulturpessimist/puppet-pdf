@@ -2,6 +2,10 @@ import Koa from "koa";
 import r from "koa-route";
 import { v4 } from "uuid";
 import puppeteer from "puppeteer";
+import { addMinutes, isBefore } from "date-fns";
+
+import { hmac } from "@noble/hashes/hmac";
+import { sha512 } from "@noble/hashes/sha512";
 
 /*
                                                            
@@ -20,7 +24,7 @@ import puppeteer from "puppeteer";
 
 const app = new Koa();
 
-// middlewares
+// SECTION Middlewares
 app.use(async (ctx, next) => {
   const start = Date.now();
   await next();
@@ -34,13 +38,113 @@ app.use(async (ctx, next) => {
   } catch (err) {
     ctx.status = err.statusCode || err.status || 500;
     ctx.body = { status: ctx.status, error: err.name, message: err.message };
-    console.error("[puppeteer.app] ERROR: ", err.message);
+    console.error("[puppet] ERROR: ", err.message);
   }
 });
 
+app.use(async (ctx, next) => {
+  if (process.env.USE_SIGNED_LINKS && ctx.request.path === "/pdf") {
+    const { sig, url, exp } = ctx.request.query;
+    if (sig && url && exp) {
+      const mac = hmac(sha512, process.env.HMAC_KEY, exp + "|" + url);
+      if (Buffer.from(mac).toString("base64url") === sig) {
+        if (isBefore(new Date(), new Date(exp))) {
+          await next();
+        } else {
+          ctx.body = `
+          <!DOCTYPE html>
+<html class="bg-base-300">
+  <head>
+    <meta charset="utf-8">
+    <title>Puppet</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+		<div class="mockup-code m-24">
+      <pre data-prefix="$"><code>puppet pdf --url ${url}</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code> Checking link and signature...</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-error"> ERROR: Link expired.</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-warning"> Please collect a new link in the application of origin.</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-error"> Exit with status 410 </code></pre>
+    </div>
+  </body>
+</html>`;
+        }
+      } else {
+        ctx.body = `
+          <!DOCTYPE html>
+<html class="bg-base-300">
+  <head>
+    <meta charset="utf-8">
+    <title>Puppet</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+		<div class="mockup-code m-24">
+      <pre data-prefix="$"><code>puppet pdf --url ${url}</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code> Checking link and signature...</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-error"> ERROR: Signature mismatch.</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-warning"> Please collect a new link in the application of origin.</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-error"> Exit with status 403 </code></pre>
+    </div>
+  </body>
+</html>`;
+      }
+    } else {
+      ctx.body = `
+          <!DOCTYPE html>
+<html class="bg-base-300">
+  <head>
+    <meta charset="utf-8">
+    <title>Puppet</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+		<div class="mockup-code m-24">
+      <pre data-prefix="$"><code>puppet pdf --url ${url}</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code> Checking link and signature...</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-error"> ERROR: Parameter mismatch.</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-warning"> Please collect a new link in the application of origin.</code></pre> 
+      <pre data-prefix=">"><code>[puppet]</code><code class="text-error"> Exit with status 400 </code></pre>
+    </div>
+  </body>
+</html>`;
+    }
+  } else {
+    await next();
+  }
+});
+
+// SECTION Routes
 app.use(
   r.all("/", async (ctx) => {
-    ctx.body = `Version ${process.env.npm_package_version}`;
+    ctx.body = `
+          <!DOCTYPE html>
+<html class="bg-base-300">
+  <head>
+    <meta charset="utf-8">
+    <title>Puppet</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+		<div class="mockup-code m-24">
+      <pre data-prefix="$"><code>puppet --version</code></pre> 
+      <pre data-prefix=">"><code>Usage: puppet pdf [options] </code></pre> 
+      <pre data-prefix=">"><code> </code></pre> 
+      <pre data-prefix=">"><code>  Options:</code></pre> 
+      <pre data-prefix=">"><code> </code></pre> 
+      <pre data-prefix=">"><code>  --url https://... ........ URL to generate the PDF from.</code></pre> 
+      <pre data-prefix=">"><code>  --sig .................... Signature for the request to run.</code></pre> 
+      <pre data-prefix=">"><code>  --exp .................... ISO Date String when the Link expires.</code></pre> 
+      <pre data-prefix=">"><code> </code></pre> 
+      <pre data-prefix=">"><code>Version ${process.env.npm_package_version}</code></pre>      
+    </div>
+  </body>
+</html>`;
   })
 );
 
@@ -105,6 +209,51 @@ app.use(
     });
     ctx.set("Content-Type", "application/pdf");
     ctx.body = pdfStream;
+  })
+);
+
+// signing
+
+app.use(
+  r.all("/_hmac", async (ctx) => {
+    const url =
+      ctx.request.query.url ||
+      "https://stackoverflow.com/questions/12710001/how-to-convert-uint8-array-to-base64-encoded-string";
+    const d = addMinutes(
+      new Date(),
+      parseInt(ctx.request.query.min || 30, 10)
+    ).toISOString();
+    const mac = hmac(sha512, process.env.HMAC_KEY, d + "|" + url);
+
+    ctx.body = `?sig=${Buffer.from(mac).toString(
+      "base64url"
+    )}&exp=${d}&url=${url}`;
+  })
+);
+
+app.use(
+  r.all("/_c", async (ctx) => {
+    const { sig, url, exp } = ctx.request.query;
+
+    if (sig && url && exp) {
+      const mac = hmac(sha512, process.env.HMAC_KEY, exp + "|" + url);
+
+      //console.log(Buffer.from(mac).toString("base64url"), "===", sig);
+
+      if (Buffer.from(mac).toString("base64url") === sig) {
+        //console.log(isBefore(new Date(), new Date(exp)));
+
+        if (isBefore(new Date(), new Date(exp))) {
+          ctx.body = "ok";
+        } else {
+          ctx.body = "Link expired";
+        }
+      } else {
+        ctx.body = "fail";
+      }
+    } else {
+      ctx.body = "fail";
+    }
   })
 );
 
