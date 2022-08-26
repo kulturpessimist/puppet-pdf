@@ -43,7 +43,10 @@ app.use(async (ctx, next) => {
 });
 
 app.use(async (ctx, next) => {
-  if (process.env.USE_SIGNED_LINKS && ctx.request.path === "/pdf") {
+  if (
+    process.env.USE_SIGNED_LINKS === "active" &&
+    ctx.request.path === "/pdf"
+  ) {
     const { sig, url, exp } = ctx.request.query;
     if (sig && url && exp) {
       const mac = hmac(sha512, process.env.HMAC_KEY, exp + "|" + url);
