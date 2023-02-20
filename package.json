@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "eval $(egrep -v '^#' .env | xargs) nodemon index.mjs",
     "start": "node index.mjs",
-    "scalingo": "curl -O https://cli-dl.scalingo.com/install && bash install; scalingo login --api-token $SCALINGO_TOKEN; scalingo -a puppet-pdf restart web:1;"
+    "scalingo": "curl -O https://cli-dl.scalingo.com/install && bash install; scalingo login --api-token $SCALINGO_TOKEN; scalingo -a puppet-pdf restart web;"
   },
   "author": "Alexander Schedler",
   "license": "ISC",

@@ -1,7 +1,8 @@
 {
   "jobs": [
     {
-      "command": "0 0 * * * npm run scalingo"
+      "command": "0 0 * * * npm run scalingo",
+      "size": "S"
     }
   ]
 }
