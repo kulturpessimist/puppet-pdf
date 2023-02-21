@@ -1,8 +1,6 @@
 import { ofetch } from "ofetch";
 
-const TOKEN =
-  process.env.SCALINGO_TOKEN ||
-  "tk-us-qPRDoJOpTbETcXPL4hMtx-6tjShQcduT8hY-OxQdS7snbmVS";
+const TOKEN = process.env.SCALINGO_TOKEN;
 
 const { token } = await ofetch("https://auth.scalingo.com/v1/tokens/exchange", {
   method: "POST",
