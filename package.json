@@ -7,7 +7,7 @@
   "scripts": {
     "dev": "eval $(egrep -v '^#' .env | xargs) nodemon index.mjs",
     "start": "node index.mjs",
-    "scalingo": "curl -O https://cli-dl.scalingo.com/install && bash install; scalingo login --api-token $SCALINGO_TOKEN; scalingo -a puppet-pdf restart web;"
+    "scalingo": "node cron.mjs"
   },
   "author": "Alexander Schedler",
   "license": "ISC",
@@ -20,6 +20,7 @@
     "date-fns": "^2.29.3",
     "koa": "^2.14.1",
     "koa-route": "^3.2.0",
+    "ofetch": "^1.0.1",
     "puppeteer": "^19.7.1",
     "uuid": "^9.0.0"
   },
