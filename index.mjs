@@ -78,7 +78,7 @@ app.use(
 app.use(
   r.all("/pdf", async (ctx) => {
     const url = ctx.request.query.url || "https://pptr.dev";
-    const download = "download" in ctx.request.query || false;
+    const download = ctx.request.query.download || "";
     //
     const browser = await puppeteer.launch({
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
@@ -130,8 +130,8 @@ app.use(
       ...cfg,
     });
 
-    if (download) {
-      ctx.response.attachment(`${cfg.filename || v4()}.pdf`);
+    if (download !== "") {
+      ctx.response.attachment(`${download || cfg.filename || v4()}.pdf`);
     }
     ctx.set("Content-Type", "application/pdf");
     ctx.set("Content-Length", pdfStream.length);
